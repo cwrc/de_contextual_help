@@ -4,5 +4,3 @@ core = 7.x
 package = Help and Documentation
 dependencies[] = ctools
 dependencies[] = fe_block
-features[fe_block_settings][] = de_contextual_help-contextual_help_link
-features[features_api][] = api:2

@@ -40,11 +40,11 @@ function de_contextual_help_block_info() {
   $blocks = array ();
   $blocks['contextual_help_link'] = array (
     'info' => t('Contextual Help Link'),
-    'cache' => DRUPAL_CACHE_PER_PAGE,
+    'cache' => DRUPAL_CACHE_PER_PAGE | DRUPAL_CACHE_PER_USER,
   );
   $blocks['help_drop_down'] = array (
     'info' => t('Help and Bug Reporting Toolbar'),
-    'cache' => DRUPAL_CACHE_PER_PAGE,
+    'cache' => DRUPAL_CACHE_PER_PAGE | DRUPAL_CACHE_PER_USER,
   );
   return $blocks;
 }
@@ -137,7 +137,12 @@ function de_contextual_help_get_applicable_help_link() {
  */
 function de_contextual_help_build_links($matched_rule) {
   //We'll likely change the markup here later.
-  $rendered_link = l(t('Help Documentation'), $matched_rule->link_destination);
+  $rendered_link = l(
+    t('Help Documentation'),
+    token_replace($matched_rule->link_destination, array(
+      'rule' => $matched_rule,
+    ))
+  );
   return $rendered_link;
 }
 
@@ -148,10 +153,10 @@ function de_contextual_help_build_links($matched_rule) {
 function contextual_help_rules() {
   // Check to see if rules are cached here?
   $contextual_help_rules = db_select('contextual_help_rules', 'chrules')
-    ->fields('chrules')
+    ->fields('chrules', array('rule_id', 'url_pattern', 'link_destination', 'weight', 'status'))
     ->orderBy('weight', 'ASC')
     ->execute()
-    ->fetchAllAssoc('rule_id');
+    ->fetchAll();
   return $contextual_help_rules;
 }
 
@@ -204,3 +209,57 @@ function de_contextual_help_features_api() {
   );
 }
 
+/**
+ * Implements hook_tokens().
+ */
+function de_contextual_help_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  global $user;
+  $replacements = array();
+
+  if ($type == "cwrc") {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'group-role':
+          $context = og_context();
+          $admin = user_role_load_by_name("administrator");
+          $is_admin = $admin != NULL && isset($user->roles[$admin->rid]);
+
+          // When outside of context, unauthenticated, or a known anonymous user
+          // just give them the public scope
+          if (empty($context) || empty($user) || in_array("anonymous user", $user->roles)) {
+
+            if ($is_admin) {
+              $replacements[$original] = "administrator";
+              break;
+            }
+
+            $replacements[$original] = "public";
+            break;
+          }
+
+          $roles = og_get_user_roles($context['group_type'], $context['gid']);
+
+          if (count($roles) == 0 || in_array("non-member", $roles)) {
+
+            if ($is_admin) {
+              $replacements[$original] = "administrator";
+              break;
+            }
+
+            $replacements[$original] = "public";
+            break;
+          }
+
+          // This may need to be changed depending on client requirements
+          $key = max(array_keys($roles));
+          $role = $roles[$key];
+
+          $replacements[$original] = str_replace(" ", "-", $role);
+
+          break;
+      }
+    }
+  }
+
+  return $replacements;
+}

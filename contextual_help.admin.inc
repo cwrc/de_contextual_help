@@ -12,19 +12,21 @@
 function contextual_help_rules_admin_form($form) {
   $contextual_help_rules = contextual_help_rules();
   $form['#tree'] = TRUE;
+  $form['#prefix'] = nl2br(variable_get("contextual_help_admin_prefix", ""));
+
   $max_weight = 0;
   foreach ($contextual_help_rules as $rid => $rvalue) {
-    $form['chrules'][$rid]['url_pattern'] = array(
+    $form['chrules'][$rvalue->rule_id]['url_pattern'] = array(
       '#type' => 'textfield',
       '#default_value' => $rvalue->url_pattern,
       '#required' => TRUE,
     );
-    $form['chrules'][$rid]['link_destination'] = array(
+    $form['chrules'][$rvalue->rule_id]['link_destination'] = array(
       '#type' => 'textfield',
       '#default_value' => $rvalue->link_destination,
       '#required' => TRUE,
     );
-    $form['chrules'][$rid]['weight'] = array(
+    $form['chrules'][$rvalue->rule_id]['weight'] = array(
       '#type' => 'weight',
       '#title' => t('Weight for @title', array('@title' => $rid)),
       '#title_display' => 'invisible',

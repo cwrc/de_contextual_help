@@ -104,6 +104,7 @@ function de_contextual_help_config_features_rebuild($module) {
     $chrule->url_pattern = $item['url_pattern'];
     $chrule->link_destination = $item['link_destination'];
     $chrule->weight = (int) $item['weight'];
+    $chrule->status = (int) $item['status'];
     contextual_help_rule_save($chrule);
   }
 }
