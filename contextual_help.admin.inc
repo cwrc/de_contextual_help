@@ -1,13 +1,17 @@
 <?php
+
 /**
  * @file
  * This implements most of the form /admin/config/contextual_help.
  */
 
 /**
- * Implements hook_form().
- *
  * Page callback: Form constructor for Rules form for Contextual Help.
+ *
+ * @see contextual_help_rules_admin_form_validate()
+ * @see contextual_help_rules_admin_form_submit()
+ *
+ * @ingroup forms
  */
 function contextual_help_rules_admin_form($form) {
   $contextual_help_rules = contextual_help_rules();
@@ -59,9 +63,13 @@ function contextual_help_rules_admin_form($form) {
 }
 
 /**
- * Implements theme_form().
- *
  * Returns HTML for the text format administration overview form.
+ *
+ * @param array $variables
+ *   An associative array containing:
+ *   - form: The form to be rendered.
+ *
+ * @ingroup themeable
  */
 function theme_contextual_help_rules_admin_form($variables) {
   $form = $variables['form'];
@@ -104,9 +112,9 @@ function theme_contextual_help_rules_admin_form($variables) {
 }
 
 /**
- * Implements drupal_form_submit().
+ * Form submission handler for theme_contextual_help_rules_admin_form().
  *
- * Form submission handler for filter_admin_overview().
+ * @see contextual_help_rules_admin_form_validate()
  */
 function contextual_help_rules_admin_form_submit($form, &$form_state) {
   // Update Rules that have already been created.
@@ -133,18 +141,18 @@ function contextual_help_rules_admin_form_submit($form, &$form_state) {
 }
 
 /**
- * Implements hook_form_validate().
+ * Form validation handler for theme_contextual_help_rules_admin_form().
  *
- * Adding form validation.
+ * @see contextual_help_rules_admin_form_submit()
  */
 function contextual_help_rules_admin_form_validate($form, &$form_state) {
   _contextual_help_rules_admin_new_form_validate_add_new($form, $form_state);
 }
 
 /**
- * Implements _hook_form_validate().
+ * Helper function to validate when new rules are entered.
  *
- * Form validation for when new rules are entered.
+ * @see contextual_help_rules_admin_form_validate()
  */
 function _contextual_help_rules_admin_new_form_validate_add_new($form, &$form_state) {
   $new_chrule = $form_state['values']['new_chrule']['new'];
@@ -157,4 +165,3 @@ function _contextual_help_rules_admin_new_form_validate_add_new($form, &$form_st
     }
   }
 }
-

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * The de_contextual_help.install file.
@@ -46,12 +47,3 @@ function de_contextual_help_schema() {
   ];
   return $schema;
 }
-
-/**
- * Implements hook_install().
- */
-function de_contextual_help_install() {
-  //
-  // contextual_help_rule_save( $initial_chrules);.
-}
-
