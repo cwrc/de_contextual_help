@@ -5,8 +5,10 @@
  * Contextual Help module file.
  */
 
+/* Hooks. */
+
 /**
- * The de_contextual_help.module file.
+ * Implements hook_menu().
  */
 function de_contextual_help_menu() {
   $items = array();
@@ -67,6 +69,89 @@ function de_contextual_help_block_view($delta = '') {
   }
   return $block;
 }
+
+/**
+ * Implements hook_theme().
+ */
+function de_contextual_help_theme() {
+  return array(
+    'contextual_help_rules_admin_form' => array(
+      'render element' => 'form',
+      'file' => 'contextual_help.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Implements hook_features_api().
+ */
+function de_contextual_help_features_api() {
+  return array(
+    'de_contextual_help_config' => array(
+      'name' => 'Contextual Help Config',
+      'file' => drupal_get_path('module', 'de_contextual_help') . '/de_contextual_help.features.inc',
+      'default_hook' => 'de_contextual_help_config_features_default_settings',
+      'feature_source' => TRUE,
+    ),
+  );
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function de_contextual_help_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  global $user;
+  $replacements = array();
+
+  if ($type == "cwrc") {
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'group-role':
+          $context = og_context();
+          $admin = user_role_load_by_name("administrator");
+          $is_admin = $admin != NULL && isset($user->roles[$admin->rid]);
+
+          // When outside of context, unauthenticated, or a known anonymous user
+          // just give them the public scope.
+          if (empty($context) || empty($user) || in_array("anonymous user", $user->roles)) {
+
+            if ($is_admin) {
+              $replacements[$original] = "administrator";
+              break;
+            }
+
+            $replacements[$original] = "public";
+            break;
+          }
+
+          $roles = og_get_user_roles($context['group_type'], $context['gid']);
+
+          if (count($roles) == 0 || in_array("non-member", $roles)) {
+
+            if ($is_admin) {
+              $replacements[$original] = "administrator";
+              break;
+            }
+
+            $replacements[$original] = "public";
+            break;
+          }
+
+          // This may need to be changed depending on client requirements.
+          $key = max(array_keys($roles));
+          $role = $roles[$key];
+
+          $replacements[$original] = str_replace(" ", "-", $role);
+
+          break;
+      }
+    }
+  }
+
+  return $replacements;
+}
+
+/* Helper functions. */
 
 /**
  * Displays a Help and Bug Reporting block.
@@ -195,85 +280,4 @@ function contextual_help_rule_save($chrule) {
     ))
     ->execute();
   return $rule_id;
-}
-
-/**
- * Implements hook_theme().
- */
-function de_contextual_help_theme() {
-  return array(
-    'contextual_help_rules_admin_form' => array(
-      'render element' => 'form',
-      'file' => 'contextual_help.admin.inc',
-    ),
-  );
-}
-
-/**
- * Implements hook_features_api().
- */
-function de_contextual_help_features_api() {
-  return array(
-    'de_contextual_help_config' => array(
-      'name' => 'Contextual Help Config',
-      'file' => drupal_get_path('module', 'de_contextual_help') . '/de_contextual_help.features.inc',
-      'default_hook' => 'de_contextual_help_config_features_default_settings',
-      'feature_source' => TRUE,
-    ),
-  );
-}
-
-/**
- * Implements hook_tokens().
- */
-function de_contextual_help_tokens($type, $tokens, array $data = array(), array $options = array()) {
-  global $user;
-  $replacements = array();
-
-  if ($type == "cwrc") {
-    foreach ($tokens as $name => $original) {
-      switch ($name) {
-        case 'group-role':
-          $context = og_context();
-          $admin = user_role_load_by_name("administrator");
-          $is_admin = $admin != NULL && isset($user->roles[$admin->rid]);
-
-          // When outside of context, unauthenticated, or a known anonymous user
-          // just give them the public scope.
-          if (empty($context) || empty($user) || in_array("anonymous user", $user->roles)) {
-
-            if ($is_admin) {
-              $replacements[$original] = "administrator";
-              break;
-            }
-
-            $replacements[$original] = "public";
-            break;
-          }
-
-          $roles = og_get_user_roles($context['group_type'], $context['gid']);
-
-          if (count($roles) == 0 || in_array("non-member", $roles)) {
-
-            if ($is_admin) {
-              $replacements[$original] = "administrator";
-              break;
-            }
-
-            $replacements[$original] = "public";
-            break;
-          }
-
-          // This may need to be changed depending on client requirements.
-          $key = max(array_keys($roles));
-          $role = $roles[$key];
-
-          $replacements[$original] = str_replace(" ", "-", $role);
-
-          break;
-      }
-    }
-  }
-
-  return $replacements;
 }

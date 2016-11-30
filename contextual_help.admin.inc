@@ -5,6 +5,8 @@
  * This implements most of the form /admin/config/contextual_help.
  */
 
+/* Form handlers. */
+
 /**
  * Page callback: Form constructor for Rules form for Contextual Help.
  *
@@ -63,6 +65,46 @@ function contextual_help_rules_admin_form($form) {
 }
 
 /**
+ * Form submission handler for theme_contextual_help_rules_admin_form().
+ *
+ * @see contextual_help_rules_admin_form_validate()
+ */
+function contextual_help_rules_admin_form_submit($form, &$form_state) {
+  // Update Rules that have already been created.
+  foreach ($form_state['values']['chrules'] as $id => $data) {
+    if (is_array($data) && isset($data['weight'])) {
+      // Only update if this is a form element with weight.
+      db_update('contextual_help_rules')
+        ->fields(array(
+          'weight' => $data['weight'],
+          'url_pattern' => $data['url_pattern'],
+          'link_destination' => $data['link_destination'],
+        ))
+        ->condition('rule_id', $id)
+        ->execute();
+    }
+  }
+  // Save New Rules.
+  $new_chrule = $form_state['values']['new_chrule']['new'];
+  if (!empty($new_chrule['url_pattern'])) {
+    $new_chrule = (object) $new_chrule;
+    contextual_help_rule_save($new_chrule);
+  }
+  drupal_set_message(t('The Contextual Help Rules have been saved.'));
+}
+
+/**
+ * Form validation handler for theme_contextual_help_rules_admin_form().
+ *
+ * @see contextual_help_rules_admin_form_submit()
+ */
+function contextual_help_rules_admin_form_validate($form, &$form_state) {
+  _contextual_help_rules_admin_new_form_validate_add_new($form, $form_state);
+}
+
+/* Theme functions. */
+
+/**
  * Returns HTML for the text format administration overview form.
  *
  * @param array $variables
@@ -111,43 +153,7 @@ function theme_contextual_help_rules_admin_form($variables) {
   return $output;
 }
 
-/**
- * Form submission handler for theme_contextual_help_rules_admin_form().
- *
- * @see contextual_help_rules_admin_form_validate()
- */
-function contextual_help_rules_admin_form_submit($form, &$form_state) {
-  // Update Rules that have already been created.
-  foreach ($form_state['values']['chrules'] as $id => $data) {
-    if (is_array($data) && isset($data['weight'])) {
-      // Only update if this is a form element with weight.
-      db_update('contextual_help_rules')
-        ->fields(array(
-          'weight' => $data['weight'],
-          'url_pattern' => $data['url_pattern'],
-          'link_destination' => $data['link_destination'],
-        ))
-        ->condition('rule_id', $id)
-        ->execute();
-    }
-  }
-  // Save New Rules.
-  $new_chrule = $form_state['values']['new_chrule']['new'];
-  if (!empty($new_chrule['url_pattern'])) {
-    $new_chrule = (object) $new_chrule;
-    contextual_help_rule_save($new_chrule);
-  }
-  drupal_set_message(t('The Contextual Help Rules have been saved.'));
-}
-
-/**
- * Form validation handler for theme_contextual_help_rules_admin_form().
- *
- * @see contextual_help_rules_admin_form_submit()
- */
-function contextual_help_rules_admin_form_validate($form, &$form_state) {
-  _contextual_help_rules_admin_new_form_validate_add_new($form, $form_state);
-}
+/* Helper functions. */
 
 /**
  * Helper function to validate when new rules are entered.
